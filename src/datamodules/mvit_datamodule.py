@@ -48,9 +48,7 @@ class MViTDataModule(LightningDataModule):
         )
 
         self.transforms_val = transforms.Compose(
-            [transforms.RandomResizedCrop((320, 320), scale=(0.70, 1.0), ratio=(0.75, 1.3333333333333333)),
-             transforms.RandomRotation(45),
-             transforms.RandomHorizontalFlip(p=0.5),
+            [transforms.Resize((320, 320)),
              transforms.Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225))]
         )
 
@@ -81,7 +79,7 @@ class MViTDataModule(LightningDataModule):
         # load datasets only if they're not loaded already
         if not self.data_train and not self.data_val and not self.data_test:
             self.data_train = HealthDataset(self.hparams.train_path, self.hparams.img_dir, transform=self.transforms)
-            self.data_val = HealthDataset(self.hparams.val_path, self.hparams.img_dir, transform=self.transforms)
+            self.data_val = HealthDataset(self.hparams.val_path, self.hparams.img_dir, transform=self.transforms_val)
             #dataset = ConcatDataset(datasets=[trainset, testset])
             #self.data_train, self.data_val, self.data_test = random_split(
             #    dataset=dataset,
