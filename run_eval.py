@@ -101,7 +101,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--weights_path",
         type=str,
-        default="/hkfs/work/workspace/scratch/im9193-H5/logs/experiments/baseline_02_02/runs/2022-02-02/19-04-47/checkpoints/epoch_030.ckpt",
+        default="./pre_trained/model.ckpt",
         help="Model weights path",
     )  # TODO: adapt to your model weights path in the bash script
     parser.add_argument(
