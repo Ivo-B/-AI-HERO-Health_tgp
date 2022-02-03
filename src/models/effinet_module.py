@@ -1,14 +1,12 @@
 from typing import Any, List
 
-import torch
-from torch import nn
-from pytorch_lightning import LightningModule
-from torchmetrics import MaxMetric
-#from torchmetrics.classification.accuracy import Accuracy
-from torchmetrics import Precision, Recall, Accuracy, AveragePrecision
-
-
 import timm
+import torch
+from pytorch_lightning import LightningModule
+from torch import nn
+
+# from torchmetrics.classification.accuracy import Accuracy
+from torchmetrics import Accuracy, AveragePrecision, MaxMetric, Precision, Recall
 
 
 class EFFILitModule(LightningModule):
@@ -30,8 +28,7 @@ class EFFILitModule(LightningModule):
         self.save_hyperparameters(logger=False)
 
         self.model = timm.create_model("efficientnetv2_rw_t", pretrained=True)
-        #self.model.classifier[-1] = nn.Linear(640, self.hparams.output_size)
-
+        # self.model.classifier[-1] = nn.Linear(640, self.hparams.output_size)
 
         if self.hparams.freeze_layers:
             for param in self.model.parameters():
@@ -46,10 +43,14 @@ class EFFILitModule(LightningModule):
         self.model.classifier = nn.Sequential(nn.Linear(1024, 32))
         self.model.classifier.add_module("Act SiLU", nn.SiLU())
         self.model.classifier.add_module("Dropout", nn.Dropout(p=0.5))
-        self.model.classifier.add_module("Output", nn.Linear(32, self.hparams.output_size))
+        self.model.classifier.add_module(
+            "Output", nn.Linear(32, self.hparams.output_size)
+        )
 
         # loss function
-        self.criterion = torch.nn.BCEWithLogitsLoss(pos_weight=torch.FloatTensor([self.hparams.pos_weight]))
+        self.criterion = torch.nn.BCEWithLogitsLoss(
+            pos_weight=torch.FloatTensor([self.hparams.pos_weight])
+        )
         # self.criterion = torch.nn.BCEWithLogitsLoss()
 
         # use separate metric instance for train, val and test step
@@ -78,11 +79,11 @@ class EFFILitModule(LightningModule):
 
         # accumulate and return metrics for logging
         acc = self.train_acc(preds, targets.long())
-        #print(acc)
+        # print(acc)
         self.log("train/acc", acc, on_step=False, on_epoch=True, prog_bar=True)
 
         pre = self.train_precision(preds, targets.long())
-        #print(pre)
+        # print(pre)
         self.log("train/pre", pre, on_step=False, on_epoch=True, prog_bar=True)
 
         rec = self.train_recall(preds, targets.long())
@@ -118,7 +119,9 @@ class EFFILitModule(LightningModule):
         self.val_acc.reset()
 
         self.val_acc_best.update(acc)
-        self.log("val/acc_best", self.val_acc_best.compute(), on_epoch=True, prog_bar=True)
+        self.log(
+            "val/acc_best", self.val_acc_best.compute(), on_epoch=True, prog_bar=True
+        )
 
     def test_step(self, batch: Any, batch_idx: int):
         loss, preds, targets = self.step(batch)
@@ -147,7 +150,6 @@ class EFFILitModule(LightningModule):
         predicted = (self(x) > 0).long()
         return [[i for i in y], predicted.cpu().numpy()]
 
-
     def configure_optimizers(self):
         """Choose what optimizers and learning-rate schedulers to use in your optimization.
         Normally you'd need one. But in the case of GANs or similar you might have multiple.
@@ -155,9 +157,18 @@ class EFFILitModule(LightningModule):
         See examples here:
             https://pytorch-lightning.readthedocs.io/en/latest/common/lightning_module.html#configure-optimizers
         """
-        optimizer = torch.optim.Adam(params=self.parameters(), lr=self.hparams.lr, weight_decay=self.hparams.weight_decay)
-        scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, "min", factor=self.hparams.lr_scheduler_factor, patience=self.hparams.lr_scheduler_patience,
-                                      min_lr=self.hparams.lr_scheduler_min_lr)
+        optimizer = torch.optim.Adam(
+            params=self.parameters(),
+            lr=self.hparams.lr,
+            weight_decay=self.hparams.weight_decay,
+        )
+        scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
+            optimizer,
+            "min",
+            factor=self.hparams.lr_scheduler_factor,
+            patience=self.hparams.lr_scheduler_patience,
+            min_lr=self.hparams.lr_scheduler_min_lr,
+        )
         return {
             "optimizer": optimizer,
             "lr_scheduler": {

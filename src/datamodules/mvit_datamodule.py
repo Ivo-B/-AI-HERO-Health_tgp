@@ -4,6 +4,7 @@ import torch
 from pytorch_lightning import LightningDataModule
 from torch.utils.data import ConcatDataset, DataLoader, Dataset, random_split
 from torchvision.transforms import transforms
+
 from src.datamodules.datasets.health import HealthDataset
 
 
@@ -27,9 +28,9 @@ class MViTDataModule(LightningDataModule):
 
     def __init__(
         self,
-        train_path = "/hkfs/work/workspace/scratch/im9193-H5/data/train.csv",
-        val_path = "/hkfs/work/workspace/scratch/im9193-H5/data/valid.csv",
-        img_dir = "/hkfs/work/workspace/scratch/im9193-H5/data/imgs/",
+        train_path="/hkfs/work/workspace/scratch/im9193-H5/data/train.csv",
+        val_path="/hkfs/work/workspace/scratch/im9193-H5/data/valid.csv",
+        img_dir="/hkfs/work/workspace/scratch/im9193-H5/data/imgs/",
         data_size: int = 224,
         batch_size: int = 64,
         num_workers: int = 0,
@@ -42,18 +43,26 @@ class MViTDataModule(LightningDataModule):
 
         # data transformations
         self.transforms = transforms.Compose(
-            [transforms.RandomRotation(45),
-             transforms.RandomHorizontalFlip(p=0.5),
-             transforms.Pad((10, 10)),
-             transforms.RandomResizedCrop((self.hparams.data_size, self.hparams.data_size), scale=(0.30, 1.0), ratio=(0.75, 1.3333333333333333)),
-             transforms.ToTensor(),
-             transforms.Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225))]
+            [
+                transforms.RandomRotation(45),
+                transforms.RandomHorizontalFlip(p=0.5),
+                transforms.Pad((10, 10)),
+                transforms.RandomResizedCrop(
+                    (self.hparams.data_size, self.hparams.data_size),
+                    scale=(0.30, 1.0),
+                    ratio=(0.75, 1.3333333333333333),
+                ),
+                transforms.ToTensor(),
+                transforms.Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225)),
+            ]
         )
 
         self.transforms_val = transforms.Compose(
-            [transforms.Resize((self.hparams.data_size, self.hparams.data_size)),
-             transforms.ToTensor(),
-             transforms.Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225))]
+            [
+                transforms.Resize((self.hparams.data_size, self.hparams.data_size)),
+                transforms.ToTensor(),
+                transforms.Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225)),
+            ]
         )
 
         # self.dims is returned when you call datamodule.size()
@@ -70,8 +79,8 @@ class MViTDataModule(LightningDataModule):
     def prepare_data(self):
         """Download data if needed. This method is called only from a single GPU.
         Do not use it to assign state (self.x = y)."""
-        #MNIST(self.hparams.data_dir, train=True, download=True)
-        #MNIST(self.hparams.data_dir, train=False, download=True)
+        # MNIST(self.hparams.data_dir, train=True, download=True)
+        # MNIST(self.hparams.data_dir, train=False, download=True)
 
         # TODO: load data here
 
@@ -82,8 +91,14 @@ class MViTDataModule(LightningDataModule):
 
         # load datasets only if they're not loaded already
         if not self.data_train and not self.data_val and not self.data_test:
-            self.data_train = HealthDataset(self.hparams.train_path, self.hparams.img_dir, transform=self.transforms)
-            self.data_val = HealthDataset(self.hparams.val_path, self.hparams.img_dir, transform=self.transforms_val)
+            self.data_train = HealthDataset(
+                self.hparams.train_path, self.hparams.img_dir, transform=self.transforms
+            )
+            self.data_val = HealthDataset(
+                self.hparams.val_path,
+                self.hparams.img_dir,
+                transform=self.transforms_val,
+            )
 
     def train_dataloader(self):
         return DataLoader(
@@ -102,6 +117,7 @@ class MViTDataModule(LightningDataModule):
             pin_memory=self.hparams.pin_memory,
             shuffle=False,
         )
+
     """
     def test_dataloader(self):
         return DataLoader(
@@ -134,8 +150,8 @@ class MViTDataModuleTesting(LightningDataModule):
 
     def __init__(
         self,
-        test_path = "/hkfs/work/workspace/scratch/im9193-H5/data/train.csv",
-        img_dir = "/hkfs/work/workspace/scratch/im9193-H5/data/imgs/",
+        test_path="/hkfs/work/workspace/scratch/im9193-H5/data/train.csv",
+        img_dir="/hkfs/work/workspace/scratch/im9193-H5/data/imgs/",
         data_size: int = 224,
         batch_size: int = 64,
         num_workers: int = 0,
@@ -148,18 +164,26 @@ class MViTDataModuleTesting(LightningDataModule):
 
         # data transformations
         self.transforms = transforms.Compose(
-            [transforms.RandomRotation(45),
-             transforms.RandomHorizontalFlip(p=0.5),
-             transforms.Pad((10, 10)),
-             transforms.RandomResizedCrop((self.hparams.data_size, self.hparams.data_size), scale=(0.30, 1.0), ratio=(0.75, 1.3333333333333333)),
-             transforms.ToTensor(),
-             transforms.Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225))]
+            [
+                transforms.RandomRotation(45),
+                transforms.RandomHorizontalFlip(p=0.5),
+                transforms.Pad((10, 10)),
+                transforms.RandomResizedCrop(
+                    (self.hparams.data_size, self.hparams.data_size),
+                    scale=(0.30, 1.0),
+                    ratio=(0.75, 1.3333333333333333),
+                ),
+                transforms.ToTensor(),
+                transforms.Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225)),
+            ]
         )
 
         self.transforms_val = transforms.Compose(
-            [transforms.Resize((self.hparams.data_size, self.hparams.data_size)),
-             transforms.ToTensor(),
-             transforms.Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225))]
+            [
+                transforms.Resize((self.hparams.data_size, self.hparams.data_size)),
+                transforms.ToTensor(),
+                transforms.Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225)),
+            ]
         )
 
         # self.dims is returned when you call datamodule.size()
@@ -174,8 +198,8 @@ class MViTDataModuleTesting(LightningDataModule):
     def prepare_data(self):
         """Download data if needed. This method is called only from a single GPU.
         Do not use it to assign state (self.x = y)."""
-        #MNIST(self.hparams.data_dir, train=True, download=True)
-        #MNIST(self.hparams.data_dir, train=False, download=True)
+        # MNIST(self.hparams.data_dir, train=True, download=True)
+        # MNIST(self.hparams.data_dir, train=False, download=True)
 
         # TODO: load data here
 
@@ -185,7 +209,12 @@ class MViTDataModuleTesting(LightningDataModule):
         The `stage` can be used to differentiate whether it's called before trainer.fit()` or `trainer.test()`."""
 
         # load datasets only if they're not loaded already
-        self.data_test = HealthDataset(self.hparams.test_path, self.hparams.img_dir, transform=self.transforms_val, load_ram=False)
+        self.data_test = HealthDataset(
+            self.hparams.test_path,
+            self.hparams.img_dir,
+            transform=self.transforms_val,
+            load_ram=False,
+        )
 
     def predict_dataloader(self):
         return DataLoader(
@@ -195,4 +224,3 @@ class MViTDataModuleTesting(LightningDataModule):
             pin_memory=self.hparams.pin_memory,
             shuffle=False,
         )
-

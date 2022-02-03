@@ -1,35 +1,43 @@
-from torch.utils.data import Dataset
-from torchvision.transforms import transforms
+import os
+
+import cv2
+import numpy as np
 import pandas as pd
 import torch
-from PIL import Image
-import numpy as np
 from joblib import Parallel, delayed
-import cv2
+from PIL import Image
 from skimage.transform import resize
-import os
+from torch.utils.data import Dataset
+from torchvision.transforms import transforms
 
 
 class HealthDataset(Dataset):
-    def __init__(self, label_path, img_path, transform=None, target_transform=None, load_ram=True):
+    def __init__(
+        self, label_path, img_path, transform=None, target_transform=None, load_ram=True
+    ):
         self.df = pd.read_csv(label_path, header=0)
-        self.df_contains_label = True if 'label' in self.df.columns else False
+        self.df_contains_label = True if "label" in self.df.columns else False
         if self.df_contains_label:
-            self.labels = torch.FloatTensor([0 if label == "negative" else 1 for label in self.df["label"]]).squeeze()
+            self.labels = torch.FloatTensor(
+                [0 if label == "negative" else 1 for label in self.df["label"]]
+            ).squeeze()
         else:
             self.labels = self.df["image"].tolist()
         self.names = self.df["image"].tolist()
         self.transform = transform
         self.target_transform = target_transform
-        self.image_path=img_path
+        self.image_path = img_path
         # load img to ram
         if load_ram:
             self.images = []
-            #for name in self.names:
+            # for name in self.names:
             #    image = Image.open(self.image_path + name)
             #    trans = np.stack((image, image, image), 2)
             #    self.images.append(Image.fromarray(trans.astype(np.uint8), mode="RGB"))
-            self.images = Parallel(n_jobs=20)(delayed(self.preproc_image)(os.path.join(self.image_path, name)) for name in self.names)
+            self.images = Parallel(n_jobs=20)(
+                delayed(self.preproc_image)(os.path.join(self.image_path, name))
+                for name in self.names
+            )
         self.load_ram = load_ram
 
     def preproc_image(self, image_path):
@@ -69,11 +77,17 @@ class HealthDataset(Dataset):
 
 if __name__ == "__main__":
     transform = transforms.Compose(
-            [transforms.RandomEqualize(p=1.0),
-             transforms.Resize((320, 320)),
-             ]
-        )
-    dataset = HealthDataset(label_path="/hkfs/work/workspace/scratch/im9193-H5/data/valid.csv", img_path = "/hkfs/work/workspace/scratch/im9193-H5/data/imgs/",transform=None, load_ram=False)
+        [
+            transforms.RandomEqualize(p=1.0),
+            transforms.Resize((320, 320)),
+        ]
+    )
+    dataset = HealthDataset(
+        label_path="/hkfs/work/workspace/scratch/im9193-H5/data/valid.csv",
+        img_path="/hkfs/work/workspace/scratch/im9193-H5/data/imgs/",
+        transform=None,
+        load_ram=False,
+    )
 
     data_dir = "/hkfs/work/workspace/scratch/im9193-H5/tmp_new/"
     for i in range(10):
@@ -86,4 +100,3 @@ if __name__ == "__main__":
             PIL_image.save(data_dir + f"{i}.png")
         except:
             continue
-

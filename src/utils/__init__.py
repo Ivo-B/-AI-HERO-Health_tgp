@@ -61,7 +61,9 @@ def extras(config: DictConfig) -> None:
     # force debugger friendly configuration if <config.trainer.fast_dev_run=True>
     # debuggers don't like GPUs and multiprocessing
     if config.trainer.get("fast_dev_run"):
-        log.info("Forcing debugger friendly configuration! <config.trainer.fast_dev_run=True>")
+        log.info(
+            "Forcing debugger friendly configuration! <config.trainer.fast_dev_run=True>"
+        )
         if config.trainer.get("gpus"):
             config.trainer.gpus = 0
         if config.datamodule.get("pin_memory"):

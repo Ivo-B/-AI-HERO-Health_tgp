@@ -1,20 +1,21 @@
-from PIL import Image
-import torch
-from tqdm import tqdm
 import logging
 import os
 import re
 
 import numpy as np
+import torch
+from PIL import Image
+from tqdm import tqdm
 
-if __name__ == '__main__':
+if __name__ == "__main__":
+
     def recursive_walk(rootdir):
         for r, dirs, files in os.walk(rootdir):
             for f in files:
                 yield os.path.join(r, f)
 
-    #path="/hkfs/work/workspace/scratch/im9193-H5/AI-HERO-Health_gp/readme_imgs/210.png"
-    #path="/hkfs/work/workspace/scratch/im9193-H5/AI-HERO-Health_gp/readme_imgs/774.png"
+    # path="/hkfs/work/workspace/scratch/im9193-H5/AI-HERO-Health_gp/readme_imgs/210.png"
+    # path="/hkfs/work/workspace/scratch/im9193-H5/AI-HERO-Health_gp/readme_imgs/774.png"
     from torchvision.transforms import Resize
 
     data_root = "/hkfs/work/workspace/scratch/im9193-H5/data"
@@ -23,7 +24,7 @@ if __name__ == '__main__':
     for file_path in recursive_walk(os.path.join(data_root, "imgs")):
         file_paths.append(file_path)
 
-    #file_paths = ["/hkfs/work/workspace/scratch/im9193-H5/AI-HERO-Health_gp/readme_imgs/219.png"]
+    # file_paths = ["/hkfs/work/workspace/scratch/im9193-H5/AI-HERO-Health_gp/readme_imgs/219.png"]
     res_layer = Resize((512, 512))
     for f in tqdm(file_paths):
         image = Image.open(f)
@@ -38,5 +39,3 @@ if __name__ == '__main__':
         PIL_image = Image.fromarray(img_np)
         PIL_image = PIL_image.convert("L")
         PIL_image.save(f.replace("/data/", "/data_pre/"))
-
-

@@ -45,8 +45,10 @@ def load_config(config_file_name="/hkfs/work/workspace/scratch/im9193-H5/AI-HERO
 
         except yaml.YAMLError as exc:
             if is_master_node:
-                logger.warning('Error while loading config file: {}'.format(config_file_name))
-                logger.warning('Error message: {}'.format(str(exc)))
+                logger.warning(
+                    "Error while loading config file: {}".format(config_file_name)
+                )
+                logger.warning("Error message: {}".format(str(exc)))
     return obj_cfg
 
 
@@ -82,7 +84,24 @@ class MVITLitModule(LightningModule):
         self.save_hyperparameters(logger=False)
 
         self.model = build_classification_model(load_config())
-        self.model.classifier[-1] = nn.Linear(640, self.hparams.output_size)
+        # self.model.classifier[-1] = nn.Linear(640, self.hparams.output_size)
+
+        if self.hparams.freeze_layers:
+            for param in self.model.parameters():
+                param.requires_grad = False
+
+            for param in self.model.layer_5.parameters():
+                param.requires_grad = True
+
+            for param in self.model.conv_1x1_exp.parameters():
+                param.requires_grad = True
+
+        self.model.classifier[-1] = nn.Linear(640, 32)
+        self.model.classifier.add_module("Act SiLU", nn.SiLU())
+        self.model.classifier.add_module("Dropout", nn.Dropout(p=0.5))
+        self.model.classifier.add_module(
+            "Output", nn.Linear(32, self.hparams.output_size)
+        )
 
         # loss function
         self.criterion = torch.nn.BCEWithLogitsLoss(pos_weight=torch.FloatTensor([self.hparams.pos_weight]))
@@ -154,7 +173,9 @@ class MVITLitModule(LightningModule):
         self.val_acc.reset()
 
         self.val_acc_best.update(acc)
-        self.log("val/acc_best", self.val_acc_best.compute(), on_epoch=True, prog_bar=True)
+        self.log(
+            "val/acc_best", self.val_acc_best.compute(), on_epoch=True, prog_bar=True
+        )
 
     def test_step(self, batch: Any, batch_idx: int):
         loss, preds, targets = self.step(batch)
@@ -191,9 +212,18 @@ class MVITLitModule(LightningModule):
         See examples here:
             https://pytorch-lightning.readthedocs.io/en/latest/common/lightning_module.html#configure-optimizers
         """
-        optimizer = torch.optim.Adam(params=self.parameters(), lr=self.hparams.lr, weight_decay=self.hparams.weight_decay)
-        scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, "min", factor=self.hparams.lr_scheduler_factor, patience=self.hparams.lr_scheduler_patience,
-                                      min_lr=self.hparams.lr_scheduler_min_lr)
+        optimizer = torch.optim.Adam(
+            params=self.parameters(),
+            lr=self.hparams.lr,
+            weight_decay=self.hparams.weight_decay,
+        )
+        scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
+            optimizer,
+            "min",
+            factor=self.hparams.lr_scheduler_factor,
+            patience=self.hparams.lr_scheduler_patience,
+            min_lr=self.hparams.lr_scheduler_min_lr,
+        )
         return {
             "optimizer": optimizer,
             "lr_scheduler": {
