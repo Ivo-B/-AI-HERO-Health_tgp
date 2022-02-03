@@ -28,6 +28,7 @@ source health_env/bin/activate
 pip install -U pip
 
 pip install cython
+pip install numpy
 # install requirements
 pip install -r requirements.txt
 ```
