@@ -58,7 +58,7 @@ It is in your responsibility that this file loads the model and weights you inte
 You can test the script by just running it, it will automatically predict on the validation set during the development.
 In the folder `evaluation` you find the corresponding bash scripts `eval.sh` or `eval_conda.sh` to be able to test the evaluation on HAICORE like this:
     
-    cd /hkfs/work/workspace/scratch/im9193-H5/AI-HERO-Health
+    cd /hkfs/work/workspace/scratch/im9193-H5/AI-HERO-Health_tgp
     sbatch evaluation/eval.sh
 
 In the bash scripts you again need to adapt the paths to your workspace and also insert the correct model weights path.
