@@ -108,7 +108,7 @@ if __name__ == "__main__":
         "--save_dir",
         type=str,
         help="Directory where weights and results are saved",
-        default="/hkfs/work/workspace/scratch/im9193-H5/submission_test",
+        default="./submission_test",
     )
     parser.add_argument(
         "--data_dir",
