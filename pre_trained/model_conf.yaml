@@ -1,7 +1,6 @@
 model:
   classification:
     name: "mobilevit"
-    pretrained: "/hkfs/work/workspace/scratch/im9193-H5/AI-HERO-Health_tgp/pre_trained/mobilevit_s.pt"
     classifier_dropout: 0.1
     mit:
       mode: "small"
