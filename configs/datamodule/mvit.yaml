@@ -2,7 +2,7 @@ _target_: src.datamodules.mvit_datamodule.MViTDataModule
 
 train_path: "/hkfs/work/workspace/scratch/im9193-H5/data/train.csv"
 val_path: "/hkfs/work/workspace/scratch/im9193-H5/data/valid.csv"
-img_dir: "/hkfs/work/workspace/scratch/im9193-H5/data_pre/imgs/"
+img_dir: "/hkfs/work/workspace/scratch/im9193-H5/data/imgs/"
 data_size: 224
 batch_size: 64
 num_workers: 0

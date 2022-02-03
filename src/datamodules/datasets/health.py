@@ -6,6 +6,8 @@ from PIL import Image
 import numpy as np
 from joblib import Parallel, delayed
 import cv2
+from skimage.transform import resize
+import os
 
 
 class HealthDataset(Dataset):
@@ -27,23 +29,32 @@ class HealthDataset(Dataset):
             #    image = Image.open(self.image_path + name)
             #    trans = np.stack((image, image, image), 2)
             #    self.images.append(Image.fromarray(trans.astype(np.uint8), mode="RGB"))
-            self.images = Parallel(n_jobs=20)(delayed(self.preproc_image)(self.image_path + name) for name in self.names)
+            self.images = Parallel(n_jobs=20)(delayed(self.preproc_image)(os.path.join(self.image_path, name)) for name in self.names)
         self.load_ram = load_ram
 
     def preproc_image(self, image_path):
         image = Image.open(image_path)
+        img_np = np.array(image)
+        img_np = resize(img_np, (512, 512), preserve_range=True).astype(np.uint8)
+        # clip
+        p_low = np.percentile(img_np, 0.5)
+        p_high = np.percentile(img_np, 99.5)
+        img_np = np.clip(img_np, p_low, p_high).astype(np.uint8)
+        # norm histo
         clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
-        image = clahe.apply(np.array(image))
-        trans = np.stack((image, image, image), 2)
+        img_np = clahe.apply(img_np)
+        trans = np.stack((img_np, img_np, img_np), 2)
         return Image.fromarray(trans.astype(np.uint8), mode="RGB")
 
     def load_image(self, idx: int) -> torch.Tensor:
         if self.load_ram:
             return self.images[idx].copy()
         else:
-            return self.preproc_image(self.image_path + self.names[idx])
+            return self.preproc_image(os.path.join(self.image_path, self.names[idx]))
 
     def __len__(self):
+        if isinstance(self.labels, list):
+            return len(self.labels)
         return self.labels.shape[0]
 
     def __getitem__(self, idx):
@@ -62,10 +73,10 @@ if __name__ == "__main__":
              transforms.Resize((320, 320)),
              ]
         )
-    dataset = HealthDataset(label_path="/hkfs/work/workspace/scratch/im9193-H5/data/valid.csv", img_path = "/hkfs/work/workspace/scratch/im9193-H5/data/imgs/",transform=transform, load_ram=False)
+    dataset = HealthDataset(label_path="/hkfs/work/workspace/scratch/im9193-H5/data/valid.csv", img_path = "/hkfs/work/workspace/scratch/im9193-H5/data/imgs/",transform=None, load_ram=False)
 
-    data_dir = "/hkfs/work/workspace/scratch/im9193-H5/tmp/"
-    for i in range(150):
+    data_dir = "/hkfs/work/workspace/scratch/im9193-H5/tmp_new/"
+    for i in range(10):
         try:
             img, _ = dataset.__getitem__(i)
             print(img.size)
