@@ -27,6 +27,7 @@ python -m venv health_env
 source health_env/bin/activate
 pip install -U pip
 
+pip install cython
 # install requirements
 pip install -r requirements.txt
 ```
