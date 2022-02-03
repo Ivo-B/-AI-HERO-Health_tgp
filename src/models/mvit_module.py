@@ -1,21 +1,19 @@
+import argparse
+import collections
+from types import SimpleNamespace
 from typing import Any, List
 
 import torch
-from torch import nn
-from pytorch_lightning import LightningModule
-from torchmetrics import MaxMetric
-#from torchmetrics.classification.accuracy import Accuracy
-from torchmetrics import Precision, Recall, Accuracy, AveragePrecision
-
-
-from cvnets.models.classification import build_classification_model
-import argparse
 import yaml
-import collections
-from types import SimpleNamespace
+from cvnets.models.classification import build_classification_model
+from pytorch_lightning import LightningModule
+from torch import nn
+
+# from torchmetrics.classification.accuracy import Accuracy
+from torchmetrics import Accuracy, AveragePrecision, MaxMetric, Precision, Recall
 
 
-def flatten_yaml_as_dict(d, parent_key='', sep='.'):
+def flatten_yaml_as_dict(d, parent_key="", sep="."):
     items = []
     for k, v in d.items():
         new_key = parent_key + sep + k if parent_key else k
@@ -36,8 +34,10 @@ class NestedNamespace(SimpleNamespace):
                 self.__setattr__(key, value)
 
 
-def load_config(config_file_name="/hkfs/work/workspace/scratch/im9193-H5/AI-HERO-Health_tgp/pre_trained/model_conf.yaml"):
-    with open(config_file_name, 'r') as yaml_file:
+def load_config(
+    config_file_name="./pre_trained/model_conf.yaml",
+):
+    with open(config_file_name, "r") as yaml_file:
         try:
             cfg = yaml.load(yaml_file, Loader=yaml.FullLoader)
             flat_cfg = flatten_yaml_as_dict(cfg)
@@ -69,6 +69,7 @@ class MVITLitModule(LightningModule):
 
     def __init__(
         self,
+        freeze_layers: bool = False,
         output_size: int = 1,
         pos_weight: int = 10,
         lr: float = 0.001,
@@ -104,7 +105,9 @@ class MVITLitModule(LightningModule):
         )
 
         # loss function
-        self.criterion = torch.nn.BCEWithLogitsLoss(pos_weight=torch.FloatTensor([self.hparams.pos_weight]))
+        self.criterion = torch.nn.BCEWithLogitsLoss(
+            pos_weight=torch.FloatTensor([self.hparams.pos_weight])
+        )
         # self.criterion = torch.nn.BCEWithLogitsLoss()
 
         # use separate metric instance for train, val and test step
@@ -133,11 +136,11 @@ class MVITLitModule(LightningModule):
 
         # accumulate and return metrics for logging
         acc = self.train_acc(preds, targets.long())
-        #print(acc)
+        # print(acc)
         self.log("train/acc", acc, on_step=False, on_epoch=True, prog_bar=True)
 
         pre = self.train_precision(preds, targets.long())
-        #print(pre)
+        # print(pre)
         self.log("train/pre", pre, on_step=False, on_epoch=True, prog_bar=True)
 
         rec = self.train_recall(preds, targets.long())
@@ -204,7 +207,6 @@ class MVITLitModule(LightningModule):
         predicted = (self(x) > 0).long()
         return [[i for i in y], predicted.cpu().numpy()]
 
-
     def configure_optimizers(self):
         """Choose what optimizers and learning-rate schedulers to use in your optimization.
         Normally you'd need one. But in the case of GANs or similar you might have multiple.
@@ -231,3 +233,4 @@ class MVITLitModule(LightningModule):
                 "monitor": "val/loss",
             },
         }
+
