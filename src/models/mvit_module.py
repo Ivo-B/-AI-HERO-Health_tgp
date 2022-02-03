@@ -4,7 +4,8 @@ import torch
 from torch import nn
 from pytorch_lightning import LightningModule
 from torchmetrics import MaxMetric
-from torchmetrics.classification.accuracy import Accuracy
+#from torchmetrics.classification.accuracy import Accuracy
+from torchmetrics import Precision, Recall, Accuracy, AveragePrecision
 
 
 from cvnets.models.classification import build_classification_model
@@ -12,31 +13,6 @@ import argparse
 import yaml
 import collections
 from types import SimpleNamespace
-
-# model:
-#   classification:
-#     name: "mobilevit"
-#     classifier_dropout: 0.1
-#     mit:
-#       mode: "small"
-#       ffn_dropout: 0.0
-#       attn_dropout: 0.0
-#       dropout: 0.1
-#       number_heads: 4
-#       no_fuse_local_global_features: false
-#       conv_kernel_size: 3
-#     activation:
-#       name: "swish"
-#   normalization:
-#     name: "batch_norm_2d"
-#     momentum: 0.1
-#   activation:
-#     name: "swish"
-#   layer:
-#     global_pool: "mean"
-#     conv_init: "kaiming_normal"
-#     linear_init: "trunc_normal"
-#     linear_init_std_dev: 0.02
 
 
 def flatten_yaml_as_dict(d, parent_key='', sep='.'):
@@ -109,14 +85,16 @@ class MVITLitModule(LightningModule):
         self.model.classifier[-1] = nn.Linear(640, self.hparams.output_size)
 
         # loss function
-        #self.criterion = torch.nn.BCEWithLogitsLoss(pos_weight=torch.FloatTensor([1, self.hparams.pos_weight]))
-        self.criterion = torch.nn.BCEWithLogitsLoss()
+        self.criterion = torch.nn.BCEWithLogitsLoss(pos_weight=torch.FloatTensor([self.hparams.pos_weight]))
+        # self.criterion = torch.nn.BCEWithLogitsLoss()
 
         # use separate metric instance for train, val and test step
         # to ensure a proper reduction over the epoch
         self.train_acc = Accuracy()
+        self.train_precision = AveragePrecision()
+        self.train_recall = Recall()
+
         self.val_acc = Accuracy()
-        #self.test_acc = Accuracy()
 
         # for logging best so far validation accuracy
         self.val_acc_best = MaxMetric()
@@ -134,13 +112,18 @@ class MVITLitModule(LightningModule):
     def training_step(self, batch: Any, batch_idx: int):
         loss, preds, targets = self.step(batch)
 
-        # log train metrics
+        # accumulate and return metrics for logging
         acc = self.train_acc(preds, targets.long())
-        self.log("train/loss", loss, on_step=False, on_epoch=True, prog_bar=False)
+        #print(acc)
         self.log("train/acc", acc, on_step=False, on_epoch=True, prog_bar=True)
 
-        #sch = self.lr_schedulers()
-        #sch.step(loss)
+        pre = self.train_precision(preds, targets.long())
+        #print(pre)
+        self.log("train/pre", pre, on_step=False, on_epoch=True, prog_bar=True)
+
+        rec = self.train_recall(preds, targets.long())
+        # print(rec)
+        self.log("train/rec", rec, on_step=False, on_epoch=True, prog_bar=True)
 
         # we can return here dict with any tensors
         # and then read it in some callback or in `training_epoch_end()`` below
@@ -155,8 +138,9 @@ class MVITLitModule(LightningModule):
         loss, preds, targets = self.step(batch)
 
         # log val metrics
-        acc = self.val_acc(preds, targets.long())
         self.log("val/loss", loss, on_step=False, on_epoch=True, prog_bar=False)
+
+        acc = self.val_acc(preds, targets.long())
         self.log("val/acc", acc, on_step=False, on_epoch=True, prog_bar=True)
 
         sch = self.lr_schedulers()
@@ -166,6 +150,9 @@ class MVITLitModule(LightningModule):
 
     def validation_epoch_end(self, outputs: List[Any]):
         acc = self.val_acc.compute()  # get val accuracy from current epoch
+        self.log("val/acc", acc, on_step=False, on_epoch=True, prog_bar=True)
+        self.val_acc.reset()
+
         self.val_acc_best.update(acc)
         self.log("val/acc_best", self.val_acc_best.compute(), on_epoch=True, prog_bar=True)
 
@@ -185,8 +172,17 @@ class MVITLitModule(LightningModule):
     def on_epoch_end(self):
         # reset metrics at the end of every epoch
         self.train_acc.reset()
-        #self.test_acc.reset()
+        self.train_precision.reset()
+
+        # self.test_acc.reset()
         self.val_acc.reset()
+
+    def predict_step(self, batch, batch_idx, dataloader_idx=0):
+        # this calls forward
+        x, y = batch
+        predicted = (self(x) > 0).long()
+        return [[i for i in y], predicted.cpu().numpy()]
+
 
     def configure_optimizers(self):
         """Choose what optimizers and learning-rate schedulers to use in your optimization.
@@ -205,4 +201,3 @@ class MVITLitModule(LightningModule):
                 "monitor": "val/loss",
             },
         }
-

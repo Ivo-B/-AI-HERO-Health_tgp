@@ -1,0 +1,25 @@
+model:
+  classification:
+    name: "mobilevit"
+    pretrained: "/hkfs/work/workspace/scratch/im9193-H5/AI-HERO-Health_tgp/pre_trained/mobilevit_s.pt"
+    classifier_dropout: 0.1
+    mit:
+      mode: "small"
+      ffn_dropout: 0.0
+      attn_dropout: 0.0
+      dropout: 0.1
+      number_heads: 4
+      no_fuse_local_global_features: false
+      conv_kernel_size: 3
+    activation:
+      name: "swish"
+  normalization:
+    name: "batch_norm_2d"
+    momentum: 0.1
+  activation:
+    name: "swish"
+  layer:
+    global_pool: "mean"
+    conv_init: "kaiming_normal"
+    linear_init: "trunc_normal"
+    linear_init_std_dev: 0.02

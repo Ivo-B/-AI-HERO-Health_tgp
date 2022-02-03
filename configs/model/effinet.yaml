@@ -1,0 +1,10 @@
+_target_: src.models.effinet_module.EFFILitModule
+
+freeze_layers: False
+output_size: 1
+pos_weight: 100
+lr: 0.001
+weight_decay: 0.0005
+lr_scheduler_min_lr: 6.25e-5
+lr_scheduler_factor: 0.5
+lr_scheduler_patience: 15

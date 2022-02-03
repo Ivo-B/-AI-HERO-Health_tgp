@@ -5,7 +5,7 @@
 
 defaults:
   - override /mode: exp.yaml
-  - override /trainer: ddp.yaml
+  - override /trainer: default.yaml
   - override /model: mvit.yaml
   - override /datamodule: mvit.yaml
   - override /callbacks: default.yaml
@@ -16,7 +16,7 @@ defaults:
 
 # name of the run determines folder name in logs
 # can also be accessed by loggers
-name: "baseline_02_02"
+name: "freeze_layers"
 
 seed: 12345
 
@@ -28,8 +28,16 @@ trainer:
   gpus: 4
   strategy: ddp
 
+model:
+  freeze_layers: True
+  pos_weight: 50
 
 datamodule:
   batch_size: 64
   num_workers: 24
-  data_size: 224
+
+# logger:
+#  csv:
+#    name: csv/${name}
+#  wandb:
+#    tags: ["covid-19", "simple_mvit_small"]

@@ -16,7 +16,7 @@ defaults:
 
 # name of the run determines folder name in logs
 # can also be accessed by loggers
-name: "baseline_02_02"
+name: "our_split"
 
 seed: 12345
 
@@ -30,6 +30,8 @@ trainer:
 
 
 datamodule:
+  train_path: "/hkfs/work/workspace/scratch/im9193-H5/data/train_new.csv"
+  val_path: "/hkfs/work/workspace/scratch/im9193-H5/data/valid_new.csv"
   batch_size: 64
   num_workers: 24
   data_size: 224
