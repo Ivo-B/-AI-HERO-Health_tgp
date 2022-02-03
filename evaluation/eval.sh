@@ -16,7 +16,8 @@ export OMP_NUM_THREADS=8
 group_workspace=/hkfs/work/workspace/scratch/im9193-H5
 data=/hkfs/work/workspace/scratch/im9193-health_challenge
 
-source ${group_workspace}/health_env/bin/activate
+source ${group_workspace}/AI-HERO-Health_tgp/health_env/bin/activate
 
-weights_path=/hkfs/work/workspace/scratch/im9193-H5/logs/experiments/effinet/runs/2022-02-02/18-26-53/checkpoints/epoch_004.ckpt
-python -u ${group_workspace}/AI-HERO-Health_tgp/run_eval.py --weights_path $weights_path --save_dir ${group_workspace}/submission --data_dir ${data}
+cd ${group_workspace}/AI-HERO-Health_tgp
+weights_path=/hkfs/work/workspace/scratch/im9193-H5/AI-HERO-Health_tgp/pre_trained/model.ckpt
+python -u ${group_workspace}/AI-HERO-Health_tgp/run_eval.py --weights_path $weights_path --save_dir ${group_workspace}/submission_test --data_dir ${data}
